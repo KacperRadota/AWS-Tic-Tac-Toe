@@ -1,0 +1,18 @@
+services:
+  backend:
+    container_name: backend
+    build: ./Server
+    ports:
+      - "3000:3000"
+    networks:
+      - tic-tac-toe
+  frontend:
+    container_name: frontend
+    build: ./Client
+    ports:
+      - "8080:80"
+    networks:
+      - tic-tac-toe
+networks:
+    tic-tac-toe:
+        driver: bridge
