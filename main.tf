@@ -2,27 +2,34 @@ provider "aws" {
 	region = "us-east-1"
 }
 
-// Define the security group
+resource "aws_vpc" "mainvpc" {
+	cidr_block = "10.1.0.0/16"
+}
+
+resource "aws_subnet" "main_subnet" {
+    vpc_id     = aws_vpc.mainvpc.id
+    cidr_block = "10.1.0.0/16"
+    availability_zone = "us-east-1a"
+}
+
 resource "aws_security_group" "app_sg" {
-  name        = "app-security-group"
-  description = "Security group for the application"
+    name        = "app-security-group"
+    description = "Security group for the application"
+	vpc_id = aws_vpc.mainvpc.id
 
-  // Define ingress rules for ports 3000 and 8080
-  ingress {
-    from_port   = 3000
-    to_port     = 3000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+    ingress {
+      from_port   = 3000
+      to_port     = 3000
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
 
-  ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  // Add more ingress rules as needed for other ports
+    ingress {
+      from_port   = 8080
+      to_port     = 8080
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
 }
 
 resource "aws_instance" "server" {
@@ -46,9 +53,16 @@ resource "aws_instance" "server" {
     sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
 	EOF
 	
+	connection {
+		type = "ssh"
+		user = "ec2-user"
+		private_key = file("C:/Users/kacpe/.awsLabKeys/default.pem")
+		host = aws_instance.server.public_ip
+	}
+	
 	provisioner "file" {
-    source = "docker-compose.yml"
-    destination = "/home/ec2-user/docker-compose.yml"
+		source = "docker-compose.yml"
+		destination = "/home/ec2-user/docker-compose.yml"
 	}
 	
 	provisioner "remote-exec" {
@@ -57,13 +71,7 @@ resource "aws_instance" "server" {
 			"docker-compose up -d"
 		]
 	}
-	
-	connection {
-		type = "ssh"
-		user = "ec2-user"
-		private_key = file("C:/Users/kacpe/.awsLabKeys/default.pem")
-		host = aws_instance.server.public_ip
-	}
-	
+		
+	subnet_id = aws_subnet.main_subnet.id
 	vpc_security_group_ids = [aws_security_group.app_sg.id]
 }
