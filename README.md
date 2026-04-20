@@ -1,1 +1,3 @@
-This repo contains code for multiplayer tic tac toe game where i used react , node-js and socketio
+# AWS Tic-Tac-Toe
+
+Multiplayer Tic-Tac-Toe game for AWS course, React, Node-JS and Socket.IO is used.
